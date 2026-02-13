@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movie CRUD App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      /* background: linear-gradient(120deg, #f6d365 0%, #fda085 100%); */
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px rgba(60,60,60,0.18);
+      padding: 40px 30px;
+    }
+    h1 {
+      text-align: center;
+      color: #ff7e5f;
+      margin-bottom: 30px;
+      letter-spacing: 2px;
+    }
+    .form-section, .movies-section {
+      margin-bottom: 40px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 500;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 18px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border 0.2s;
+    }
+    input[type="text"]:focus {
+      border: 1.5px solid #ff7e5f;
+      outline: none;
+    }
+    button {
+      background: linear-gradient(90deg, #ff7e5f 0%, #feb47b 100%);
+      color: #fff;
+      border: none;
+      padding: 12px 28px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+    button:hover {
+      background: linear-gradient(90deg, #feb47b 0%, #ff7e5f 100%);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 18px;
+      background: #fafafa;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 10px;
+      text-align: left;
+    }
+    th {
+      background: #ff7e5f;
+      color: #fff;
+      font-weight: 600;
+    }
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+    .api-section {
+      background: #fff7e6;
+      border: 1px solid #ffe0b2;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 30px;
+    }
+    .endpoint {
+      font-family: monospace;
+      color: #ff7e5f;
+      font-size: 1.05em;
+    }
+    .method {
+      font-weight: bold;
+      color: #ffb347;
+    }
+    @media (max-width: 700px) {
+      .container { padding: 18px 6px; }
+      th, td { font-size: 0.95em; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎬 Movie CRUD App</h1>
+
+    <div class="api-section">
+      <h2>API Endpoints Example</h2>
+      <ul>
+        <li><span class="method">GET</span> <span class="endpoint">/movies</span> – List all movies</li>
+        <li><span class="method">GET</span> <span class="endpoint">/movies/{id}</span> – Get a movie by ID</li>
+        <li><span class="method">POST</span> <span class="endpoint">/movies</span> – Add a new movie</li>
+        <li><span class="method">PUT</span> <span class="endpoint">/movies/{id}</span> – Update a movie</li>
+        <li><span class="method">DELETE</span> <span class="endpoint">/movies/{id}</span> – Delete a movie</li>
+      </ul>
+    </div>
+
+    <div class="form-section">
+      <h2>Add a New Movie</h2>
+      <form id="movieForm">
+        <label for="id">ID</label>
+        <input type="text" id="id" name="id" required>
+
+        <label for="isbn">ISBN</label>
+        <input type="text" id="isbn" name="isbn" required>
+
+        <label for="title">Title</label>
+        <input type="text" id="title" name="title" required>
+
+        <label for="firstname">Director First Name</label>
+        <input type="text" id="firstname" name="firstname" required>
+
+        <label for="lastname">Director Last Name</label>
+        <input type="text" id="lastname" name="lastname" required>
+
+        <button type="submit">Add Movie</button>
+      </form>
+    </div>
+
+    <div class="movies-section">
+      <h2>All Movies</h2>
+      <table id="moviesTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>ISBN</th>
+            <th>Title</th>
+            <th>Director</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Movies will be loaded here -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <script>
+    async function fetchMovies() {
+      const res = await fetch('/movies');
+      const movies = await res.json();
+      const tbody = document.querySelector('#moviesTable tbody');
+      tbody.innerHTML = '';
+      movies.forEach(movie => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${movie.id}</td>
+          <td>${movie.isbn}</td>
+          <td>${movie.title}</td>
+          <td>${movie.director ? movie.director.firstname + ' ' + movie.director.lastname : ''}</td>
+          <td>
+            <button onclick="deleteMovie('${movie.id}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function deleteMovie(id) {
+      if (!confirm('Are you sure you want to delete this movie?')) return;
+      await fetch(`/movies/${id}`, { method: 'DELETE' });
+      fetchMovies();
+    }
+
+    document.getElementById('movieForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const movie = {
+        id: document.getElementById('id').value,
+        isbn: document.getElementById('isbn').value,
+        title: document.getElementById('title').value,
+        director: {
+          firstname: document.getElementById('firstname').value,
+          lastname: document.getElementById('lastname').value
+        }
+      };
+      await fetch('/movies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(movie)
+      });
+      this.reset();
+      fetchMovies();
+    });
+
+    // Initial load
+    fetchMovies();
+  </script>
+</body>
+</html>
